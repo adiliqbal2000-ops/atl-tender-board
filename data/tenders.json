@@ -1,0 +1,19 @@
+{
+  "generated_at": "seed-not-yet-run",
+  "tenders": [
+    {"org":"PARCO","title":"Hiring of Catering Services at PARCO-MCR","no":"100019431","type":"Tender","close":"2026-07-29","bond":"Rs. 500,000","link":"https://parco.com.pk/?p=16189","notes":"Bid via SAP Ariba."},
+    {"org":"PARCO","title":"Construction of Paddle Court in Housing Complex at PARCO-MCR, Mahmoodkot","no":"370002126","type":"Tender","close":"2026-07-29","bond":"Rs. 200,000","link":"https://parco.com.pk/?p=16189","notes":"Bid via SAP Ariba."},
+    {"org":"PARCO","title":"Replacement of Flash Point Analyzer","no":"6000013940","type":"Tender","close":"2026-09-18","bond":"","link":"https://parco.com.pk/?p=16189","notes":""},
+    {"org":"PARCO","title":"Replacement of The Viscosity Analyzer","no":"6000013941","type":"Tender","close":"2026-09-21","bond":"","link":"https://parco.com.pk/?p=16189","notes":""},
+    {"org":"PARCO","title":"Construction of Car Parking Shed at T-5-1 Keamari","no":"600011740-26","type":"Tender","close":"2026-07-29","bond":"Rs. 50,000","link":"https://parco.com.pk/?p=16189","notes":""},
+    {"org":"PARCO","title":"Disposal of Hazardous Material (PS1 Karachi Korangi, PS2 Bubak, PS3 Shikarpur)","no":"PAR-DHM-PS1-08-26","type":"Tender","close":"2026-08-27","bond":"5%","link":"https://parco.com.pk/?p=16189","notes":"SEPA-approved contractors only."},
+    {"org":"PARCO","title":"Supply of Tubes Seamless Straight for Heat Exchanger","no":"6000012773","type":"Tender","close":"2026-08-04","bond":"Rs. 60,000","link":"https://parco.com.pk/?p=16189","notes":""},
+    {"org":"PSO","title":"Coating of Piping at PMY Terminal","no":"OP-19868-AM","type":"Tender","close":"2026-08-18","bond":"Rs. 90,000","link":"https://epms.ppra.gov.pk/public/tenders/tender-details/TS0000010617E","notes":""},
+    {"org":"PSO","title":"Air Bounding & Hydrotesting of 12\" TDL Valves / Breather Valve Replacement at PSO-KTB","no":"OP-19599-AAR","type":"Tender","close":"","bond":"","link":"https://epms.ppra.gov.pk/public/tenders/tender-details/TS0000008563E","notes":""},
+    {"org":"PSO","title":"Prequalification for Supply of Super Graphic PE Labels (Small Packs of Lubricants)","no":"PQ-A4341-FI","type":"Prequalification","close":"","bond":"","link":"https://discovery.ariba.com/rfx/19449036","notes":"Bidders already prequalified in a prior round exempt. Bid via SAP Ariba."},
+    {"org":"SNGPL","title":"Tyres (Misc. Size) — 11 items","no":"LET/007/26","type":"Tender","close":"","bond":"Rs. 1,000 doc fee","link":"https://epms.ppra.gov.pk/public/tenders/tender-details/TS0000004259E","notes":""},
+    {"org":"SNGPL","title":"Fabrication & Supply of TR Unit Enclosures, Corrosion Control, Lahore (West) Region","no":"LDC/G/23/TRUW/W/25-26","type":"Tender","close":"2026-04-28","bond":"","link":"https://eprocure.gov.pk/","notes":"Closed — reference only."},
+    {"org":"SSGC","title":"Protective Work on 42\" Dia. RLNG Pipeline at MP-316 near RS-5, Dhabeji","no":"TS0000002000E","type":"Tender","close":"2026-03-27","bond":"Rs. 25,000","link":"https://epms.ppra.gov.pk/public/tenders/tender-details/TS0000002000E","notes":"Closed — reference only."},
+    {"org":"PSO","title":"Prequalification for Transportation Services of LPG","no":"PQ-A4875-SZ","type":"Prequalification","close":"2026-06-01","bond":"","link":"https://epms.ppra.gov.pk/public/tenders/tenders-history","notes":"Closed — reference only. Logistics, not ATL scope."}
+  ]
+}
