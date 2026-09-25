@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>O&G Tender Board</title>
+<style>
+:root{
+  --bg:#0b1420; --panel:#111e2e; --panel2:#16273a; --border:#22384f;
+  --text:#e7eef5; --muted:#8ba3ba; --accent:#2fb3a3; --accent2:#e0a336; --danger:#e0596f;
+  box-sizing:border-box;
+}
+*{box-sizing:inherit}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+header{position:sticky;top:0;background:linear-gradient(180deg,#0e1b29,#0b1420 90%);
+  padding:calc(16px + env(safe-area-inset-top,0px)) 16px 12px;border-bottom:1px solid var(--border);z-index:5}
+h1{margin:0 0 2px;font-size:19px;letter-spacing:.2px}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted);font-size:12.5px}
+main{max-width:980px;margin:0 auto;padding:14px 12px 60px}
+.sources{display:flex;gap:8px;overflow-x:auto;padding:10px 0 4px;-webkit-overflow-scrolling:touch}
+.src{flex:0 0 auto;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:7px 11px;
+  font-size:12.5px;color:var(--text);text-decoration:none;white-space:nowrap}
+.src b{color:var(--accent2)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+input,select,textarea{background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:8px;
+  padding:9px 10px;font-size:14px;font-family:inherit}
+#q{flex:1;min-width:160px}
+.btn{background:var(--accent);color:#06211d;border:none;border-radius:8px;padding:9px 14px;font-weight:600;
+  font-size:14px;cursor:pointer}
+.btn.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--border)}
+.btn.danger{background:transparent;color:var(--danger);border:1px solid var(--danger)}
+.count{color:var(--muted);font-size:12.5px;margin:2px 0 10px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:13px 14px;margin-bottom:10px}
+.card-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.org{display:inline-block;background:var(--panel2);color:var(--accent2);font-size:11px;font-weight:700;
+  letter-spacing:.4px;padding:2px 7px;border-radius:5px;margin-bottom:6px}
+.title{font-size:15px;font-weight:600;margin:0 0 4px}
+.meta{color:var(--muted);font-size:12.5px;display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.meta b{color:var(--text)}
+.badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.badge.soon{background:#3a2410;color:var(--accent2)}
+.badge.open{background:#0f2f28;color:var(--accent)}
+.badge.closed{background:#2f1418;color:var(--danger)}
+.card a.link{color:var(--accent);font-size:12.5px;text-decoration:none}
+.card a.link:hover{text-decoration:underline}
+.rm{background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;padding:2px 6px}
+.rm:hover{color:var(--danger)}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:12px;
+  padding:0;width:min(480px,92vw);max-height:85vh}
+dialog::backdrop{background:rgba(0,0,0,.55)}
+.dform{padding:16px;display:flex;flex-direction:column;gap:9px;overflow-y:auto;max-height:85vh}
+.dform h3{margin:0 0 4px}
+.row2{display:flex;gap:8px}
+.row2>*{flex:1}
+label{font-size:12px;color:var(--muted);margin-bottom:-4px}
+footer{text-align:center;color:var(--muted);font-size:11.5px;padding:20px 0}
+::placeholder{color:#5f7488}
+</style>
+</head>
+<body>
+<header>
+  <h1>Oil &amp; Gas <span>Tender Board</span></h1>
+  <div class="sub">Search &amp; track tenders / prequalifications across PARCO, PSO, SNGPL, SSGC, ARL, NRL, PRL, PAPCO &amp; SAP Ariba</div>
+  <div class="sub" id="liveStatus" style="margin-top:3px">Loading live data…</div>
+  <div class="sources" id="sources"></div>
+</header>
+<main>
+  <div class="toolbar">
+    <input id="q" placeholder="Search title, org, tender no...">
+    <select id="orgFilter"></select>
+    <select id="statusFilter">
+      <option value="">All statuses</option>
+      <option value="open">Open</option>
+      <option value="soon">Closing soon</option>
+      <option value="closed">Closed</option>
+    </select>
+    <select id="expFilter"></select>
+    <select id="sortBy">
+      <option value="close">Sort: closing soonest</option>
+      <option value="added">Sort: newest added</option>
+      <option value="org">Sort: organization</option>
+    </select>
+    <button class="btn" id="addBtn">+ Add tender</button>
+    <button class="btn secondary" id="exportBtn">Export</button>
+    <button class="btn secondary" id="importBtn">Import</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none">
+  </div>
+  <label style="display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12.5px;margin:-4px 0 8px">
+    <input type="checkbox" id="relevantOnly" checked style="width:14px;height:14px">
+    Show only tenders matching Al-Tariq's expertise (hides packaging/office-supply/unrelated items)
+  </label>
+  <div class="count" id="count"></div>
+  <div id="list"></div>
+</main>
+<footer>Manually curated + your own entries. Not a live feed — source portals require their own accounts. Add new tenders as you find them.</footer>
+
+<dialog id="dlg">
+  <form class="dform" method="dialog" id="form">
+    <h3>Add tender</h3>
+    <label>Organization</label>
+    <select id="f_org">
+      <option>PARCO</option><option>PAPCO</option><option>PSO</option><option>NRL</option>
+      <option>PRL</option><option>SSGC</option><option>SNGPL</option><option>ARL</option>
+      <option>SAP Ariba</option><option>Other</option>
+    </select>
+    <label>Title / scope of work</label>
+    <input id="f_title" required placeholder="e.g. Supply of Pipeline Valves">
+    <label>Tender / PQ number</label>
+    <input id="f_no" placeholder="e.g. 6000013940">
+    <div class="row2">
+      <div>
+        <label>Type</label>
+        <select id="f_type"><option>Tender</option><option>Prequalification</option><option>EOI/RFP</option></select>
+      </div>
+      <div>
+        <label>Closing date</label>
+        <input id="f_close" type="date">
+      </div>
+    </div>
+    <label>Bid bond (optional)</label>
+    <input id="f_bond" placeholder="e.g. Rs. 90,000">
+    <label>Link (SAP Ariba / portal URL)</label>
+    <input id="f_link" placeholder="https://...">
+    <label>Notes</label>
+    <textarea id="f_notes" rows="2"></textarea>
+    <label>ATL expertise tags (auto-detected tags are pre-checked — adjust as needed)</label>
+    <div id="f_exp" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    <div class="row2" style="margin-top:6px">
+      <button type="button" class="btn secondary" id="cancelBtn">Cancel</button>
+      <button type="submit" class="btn" id="saveBtn">Save tender</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const SOURCES = [
+  ["PARCO","https://www.parco.com.pk/tenders/","Company's own tender page — live"],
+  ["PAPCO","https://www.parco.com.pk/tenders/","PAPCO tenders are issued via PARCO Materials"],
+  ["PSO","https://www.psopk.com/procurement","Company's own procurement page — live"],
+  ["SNGPL","https://eprocure.gov.pk/#/auth/login","Bid via EPADS govt e-procurement portal"],
+  ["SSGC","https://eprocure.gov.pk/#/auth/login","Bid via EPADS govt e-procurement portal"],
+  ["ARL","https://eprocure.gov.pk/#/auth/login","No standalone tender page found — via EPADS"],
+  ["NRL","https://eprocure.gov.pk/#/auth/login","No standalone tender page found — via EPADS"],
+  ["PRL","https://eprocure.gov.pk/#/auth/login","No standalone tender page found — via EPADS"],
+  ["SAP Ariba","https://discovery.ariba.com","Where PARCO/PSO bidding actually happens"],
+  ["PPRA e-PMS (search all)","https://epms.ppra.gov.pk/public/tenders/tenders-history","Live public tender listing — searchable, no login"]
+];
+
+// Fallback data, used only if data/tenders.json can't be loaded (e.g. opened as a
+// local file, or before the GitHub Action has run for the first time).
+const FALLBACK_SEED = [
+{org:"PARCO",title:"Hiring of Catering Services at PARCO-MCR",no:"100019431",type:"Tender",close:"2026-07-29",bond:"Rs. 500,000",link:"https://www.parco.com.pk/tenders/",notes:"Bid via SAP Ariba."},
+{org:"PARCO",title:"Construction of Paddle Court in Housing Complex at PARCO-MCR, Mahmoodkot",no:"370002126",type:"Tender",close:"2026-07-29",bond:"Rs. 200,000",link:"https://www.parco.com.pk/tenders/",notes:"Bid via SAP Ariba."},
+{org:"PARCO",title:"Replacement of Flash Point Analyzer",no:"6000013940",type:"Tender",close:"2026-09-18",bond:"",link:"https://www.parco.com.pk/tenders/",notes:""},
+{org:"PARCO",title:"Replacement of The Viscosity Analyzer",no:"6000013941",type:"Tender",close:"2026-09-21",bond:"",link:"https://www.parco.com.pk/tenders/",notes:""},
+{org:"PARCO",title:"Construction of Car Parking Shed at T-5-1 Keamari",no:"600011740-26",type:"Tender",close:"2026-07-29",bond:"Rs. 50,000",link:"https://www.parco.com.pk/tenders/",notes:""},
+{org:"PARCO",title:"Disposal of Hazardous Material (PS1 Karachi Korangi, PS2 Bubak, PS3 Shikarpur)",no:"PAR-DHM-PS1-08-26",type:"Tender",close:"2026-08-27",bond:"5%",link:"https://www.parco.com.pk/tenders/",notes:"SEPA-approved contractors only."},
+{org:"PARCO",title:"Supply of Tubes Seamless Straight for Heat Exchanger",no:"6000012773",type:"Tender",close:"2026-08-04",bond:"Rs. 60,000",link:"https://www.parco.com.pk/tenders/",notes:""},
+{org:"PSO",title:"Coating of Piping at PMY Terminal",no:"OP-19868-AM",type:"Tender",close:"2026-08-18",bond:"Rs. 90,000",link:"https://epms.ppra.gov.pk/public/tenders/tender-details/TS0000010617E",notes:""},
+{org:"PSO",title:"Air Bounding & Hydrotesting of 12\" TDL Valves / Breather Valve Replacement at PSO-KTB",no:"OP-19599-AAR",type:"Tender",close:"",bond:"",link:"https://epms.ppra.gov.pk/public/tenders/tender-details/TS0000008563E",notes:""},
+{org:"PSO",title:"Prequalification for Supply of Super Graphic PE Labels (Small Packs of Lubricants)",no:"PQ-A4341-FI",type:"Prequalification",close:"",bond:"",link:"https://discovery.ariba.com/rfx/19449036",notes:"Bidders already prequalified in a prior round exempt. Bid via SAP Ariba."},
+{org:"SNGPL",title:"Tyres (Misc. Size) — 11 items",no:"LET/007/26",type:"Tender",close:"",bond:"Rs. 1,000 doc fee",link:"https://epms.ppra.gov.pk/public/tenders/tender-details/TS0000004259E",notes:""},
+{org:"SNGPL",title:"Fabrication & Supply of TR Unit Enclosures, Corrosion Control, Lahore (West) Region",no:"LDC/G/23/TRUW/W/25-26",type:"Tender",close:"2026-04-28",bond:"",link:"https://eprocure.gov.pk/",notes:"Closed — reference only."},
+{org:"SSGC",title:"Protective Work on 42\" Dia. RLNG Pipeline at MP-316 near RS-5, Dhabeji",no:"TS0000002000E",type:"Tender",close:"2026-03-27",bond:"Rs. 25,000",link:"https://epms.ppra.gov.pk/public/tenders/tender-details/TS0000002000E",notes:"Closed — reference only."},
+{org:"PSO",title:"Prequalification for Transportation Services of LPG",no:"PQ-A4875-SZ",type:"Prequalification",close:"2026-06-01",bond:"",link:"https://epms.ppra.gov.pk/public/tenders/tenders-history",notes:"Closed — reference only. Logistics, not ATL scope."}
+];
+
+// Al-Tariq Constructors' actual service lines (atlpk.com), used to auto-tag tenders as relevant/irrelevant
+const EXPERTISE = {
+  "Civil Construction": ["civil","building","construction of","foundation","concrete","masjid","hostel","paddle court","car parking","shed"],
+  "Piping": ["pipe","piping","pipeline","valve","flange","nrv","strainer"],
+  "Plant Construction": ["plant","turnkey","commissioning","mechanical & electrical","upgrad"],
+  "Structure": ["structure","steel","fabrication","platform","enclosure","welding"],
+  "Tankages": ["tank","tankage","storage tank","pressure vessel"],
+  "Fuel Farms": ["fuel farm","terminal","pmy terminal","dispensing"],
+  "Insulation & Coating": ["insulation","coating","corrosion","paint"],
+  "Electrical & Instrumentation": ["electrical","instrumentation","analyzer","cp station","cathodic","networking","transformer","tr unit"]
+};
+function computeExpertise(t){
+  if(Array.isArray(t.exp)) return t.exp; // manual override wins
+  const hay = ((t.title||"")+" "+(t.notes||"")).toLowerCase();
+  const tags = Object.keys(EXPERTISE).filter(cat => EXPERTISE[cat].some(kw => hay.includes(kw)));
+  return tags;
+}
+function autoExpertise(title,notes){
+  const hay = ((title||"")+" "+(notes||"")).toLowerCase();
+  return Object.keys(EXPERTISE).filter(cat => EXPERTISE[cat].some(kw => hay.includes(kw)));
+}
+
+const STORE_KEY = "og_tender_board_entries_v1";
+function loadCustom(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)||"[]"); }catch(e){ return []; } }
+function saveCustom(list){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(list)); }catch(e){} }
+
+let custom = loadCustom();
+let liveTenders = null; // populated by data/tenders.json when available
+
+function allTenders(){
+  const base = liveTenders && liveTenders.length ? liveTenders : FALLBACK_SEED;
+  return [...custom.map((t,i)=>({...t,_custom:true,_idx:i})), ...base.map(t=>({...t,_custom:false}))];
+}
+
+async function loadLiveData(){
+  const statusEl = document.getElementById("liveStatus");
+  try{
+    const res = await fetch("./data/tenders.json", {cache:"no-store"});
+    if(!res.ok) throw new Error("no data file");
+    const json = await res.json();
+    if(Array.isArray(json.tenders) && json.tenders.length){
+      liveTenders = json.tenders;
+      const when = json.generated_at && json.generated_at!=="seed-not-yet-run"
+        ? new Date(json.generated_at).toLocaleString()
+        : null;
+      statusEl.textContent = when
+        ? `Live data — auto-refreshed ${when}`
+        : "Live data file found, but the scheduled scraper hasn't run yet — showing its seed copy.";
+    } else {
+      statusEl.textContent = "No live data yet — showing the offline reference copy.";
+    }
+  } catch(e){
+    statusEl.textContent = "Opened as a local file, or data/tenders.json isn't reachable — showing the offline reference copy.";
+  }
+  refreshOrgFilter();
+  render();
+}
+
+function status(t){
+  if(!t.close) return "open";
+  const d = new Date(t.close+"T23:59:59");
+  const now = new Date();
+  const days = (d-now)/86400000;
+  if(days < 0) return "closed";
+  if(days <= 10) return "soon";
+  return "open";
+}
+function badgeLabel(s){ return s==="soon"?"Closing soon":s==="closed"?"Closed":"Open"; }
+function daysLeft(close){
+  const d = Math.ceil((new Date(close+"T23:59:59") - new Date())/86400000);
+  return d<0?0:d;
+}
+
+const sourcesEl = document.getElementById("sources");
+SOURCES.forEach(([name,url,note])=>{
+  const a=document.createElement("a");
+  a.className="src"; a.href=url; a.target="_blank"; a.rel="noopener";
+  a.title = note || "";
+  a.innerHTML = `<b>${name}</b> ↗`;
+  sourcesEl.appendChild(a);
+});
+
+const orgFilter = document.getElementById("orgFilter");
+function refreshOrgFilter(){
+  const orgs = [...new Set(allTenders().map(t=>t.org))].sort();
+  orgFilter.innerHTML = '<option value="">All organizations</option>' + orgs.map(o=>`<option value="${o}">${o}</option>`).join("");
+}
+const expFilter = document.getElementById("expFilter");
+expFilter.innerHTML = '<option value="">All ATL expertise</option>' +
+  Object.keys(EXPERTISE).map(c=>`<option value="${c}">${c}</option>`).join("") +
+  '<option value="__none">Unmatched / other</option>';
+const relevantOnly = document.getElementById("relevantOnly");
+const sortByEl = document.getElementById("sortBy");
+
+const listEl = document.getElementById("list");
+const countEl = document.getElementById("count");
+const qEl = document.getElementById("q");
+const statusEl = document.getElementById("statusFilter");
+
+function render(){
+  const q = qEl.value.trim().toLowerCase();
+  const org = orgFilter.value;
+  const st = statusEl.value;
+  const exp = expFilter.value;
+  const onlyRelevant = relevantOnly.checked;
+  let items = allTenders().map(t=>({...t, _exp: computeExpertise(t)})).filter(t=>{
+    if(org && t.org!==org) return false;
+    const s = status(t);
+    if(st && s!==st) return false;
+    if(exp==="__none" && t._exp.length) return false;
+    if(exp && exp!=="__none" && !t._exp.includes(exp)) return false;
+    if(!exp && onlyRelevant && !t._exp.length) return false;
+    if(q){
+      const hay = (t.title+" "+t.org+" "+(t.no||"")+" "+(t.notes||"")).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  const sb = sortByEl.value;
+  items.sort((a,b)=>{
+    if(sb==="org") return a.org.localeCompare(b.org);
+    if(sb==="added") return (b._custom?1:0)-(a._custom?1:0) || (b._idx??0)-(a._idx??0);
+    const oa=status(a)==="closed"?1:0, ob=status(b)==="closed"?1:0;
+    if(oa!==ob) return oa-ob;
+    return (a.close||"9999").localeCompare(b.close||"9999");
+  });
+  countEl.textContent = items.length + " tender" + (items.length===1?"":"s");
+  listEl.innerHTML = items.map(t=>{
+    const s = status(t);
+    return `<div class="card">
+      <div class="card-top">
+        <div>
+          <span class="org">${t.org}</span>
+          <div class="title">${escapeHtml(t.title)}</div>
+        </div>
+        <span class="badge ${s}">${badgeLabel(s)}</span>
+      </div>
+      <div class="meta">
+        ${t.no?`<span><b>No:</b> ${escapeHtml(t.no)}</span>`:""}
+        <span><b>Type:</b> ${t.type||"Tender"}</span>
+        ${t.close?`<span><b>Closes:</b> ${t.close}${s!=="closed"?` (${daysLeft(t.close)}d left)`:""}</span>`:""}
+        ${t.bond?`<span><b>Bond:</b> ${escapeHtml(t.bond)}</span>`:""}
+      </div>
+      ${t.notes?`<div class="meta" style="margin-top:2px">${escapeHtml(t.notes)}</div>`:""}
+      ${t._exp.length?`<div class="meta" style="margin-top:4px">${t._exp.map(c=>`<span class="badge open" style="background:#132a3c;color:#5fb8e0">${c}</span>`).join(" ")}</div>`:`<div class="meta" style="margin-top:4px;opacity:.6">Not matched to ATL service lines</div>`}
+      <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+        ${t.link?`<a class="link" href="${escapeAttr(t.link)}" target="_blank" rel="noopener">Open source ↗</a>`:"<span></span>"}
+        <span>${t._custom?`<button class="rm" data-act="edit" data-idx="${t._idx}">edit</button><button class="rm" data-act="rm" data-idx="${t._idx}">remove</button>`:""}</span>
+      </div>
+    </div>`;
+  }).join("") || `<div class="count">No tenders match your filters.</div>`;
+
+  listEl.querySelectorAll(".rm").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const idx = parseInt(btn.dataset.idx,10);
+      if(btn.dataset.act==="rm"){
+        custom.splice(idx,1);
+        saveCustom(custom);
+        refreshOrgFilter();
+        render();
+      } else {
+        openForm(custom[idx], idx);
+      }
+    });
+  });
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function escapeAttr(s){ return escapeHtml(s); }
+
+qEl.addEventListener("input", render);
+orgFilter.addEventListener("change", render);
+statusEl.addEventListener("change", render);
+expFilter.addEventListener("change", render);
+relevantOnly.addEventListener("change", render);
+
+const dlg = document.getElementById("dlg");
+const expBox = document.getElementById("f_exp");
+let editIdx = null;
+
+function renderExpCheckboxes(checkedTags){
+  expBox.innerHTML = Object.keys(EXPERTISE).map(cat=>{
+    const id = "ce_"+cat.replace(/[^a-z]/gi,"");
+    const on = checkedTags.includes(cat) ? "checked" : "";
+    return `<label style="display:flex;align-items:center;gap:4px;background:var(--panel2);border:1px solid var(--border);
+      border-radius:6px;padding:4px 8px;font-size:11.5px;color:var(--text)">
+      <input type="checkbox" value="${cat}" id="${id}" ${on} style="width:13px;height:13px">${cat}</label>`;
+  }).join("");
+}
+
+function openForm(tender, idx){
+  editIdx = (idx===undefined) ? null : idx;
+  document.getElementById("saveBtn").textContent = editIdx===null ? "Save tender" : "Update tender";
+  const f = id => document.getElementById(id);
+  f("f_org").value = tender?.org || "PARCO";
+  f("f_title").value = tender?.title || "";
+  f("f_no").value = tender?.no || "";
+  f("f_type").value = tender?.type || "Tender";
+  f("f_close").value = tender?.close || "";
+  f("f_bond").value = tender?.bond || "";
+  f("f_link").value = tender?.link || "";
+  f("f_notes").value = tender?.notes || "";
+  renderExpCheckboxes(tender ? computeExpertise(tender) : autoExpertise(f("f_title").value, f("f_notes").value));
+  dlg.showModal();
+}
+document.getElementById("addBtn").addEventListener("click", ()=> openForm(null));
+document.getElementById("cancelBtn").addEventListener("click", ()=> dlg.close());
+// live re-suggest expertise tags as title/notes change while adding new (not while editing, to avoid clobbering manual picks)
+["f_title","f_notes"].forEach(id=>{
+  document.getElementById(id).addEventListener("blur", ()=>{
+    if(editIdx===null){
+      const checked = [...expBox.querySelectorAll("input:checked")].map(c=>c.value);
+      if(!checked.length){
+        renderExpCheckboxes(autoExpertise(document.getElementById("f_title").value, document.getElementById("f_notes").value));
+      }
+    }
+  });
+});
+
+document.getElementById("form").addEventListener("submit", (e)=>{
+  e.preventDefault();
+  const t = {
+    org: document.getElementById("f_org").value,
+    title: document.getElementById("f_title").value.trim(),
+    no: document.getElementById("f_no").value.trim(),
+    type: document.getElementById("f_type").value,
+    close: document.getElementById("f_close").value,
+    bond: document.getElementById("f_bond").value.trim(),
+    link: document.getElementById("f_link").value.trim(),
+    notes: document.getElementById("f_notes").value.trim(),
+    exp: [...expBox.querySelectorAll("input:checked")].map(c=>c.value)
+  };
+  if(!t.title){ return; }
+  if(editIdx===null){ custom.unshift(t); } else { custom[editIdx] = t; }
+  saveCustom(custom);
+  e.target.reset();
+  dlg.close();
+  refreshOrgFilter();
+  render();
+});
+
+document.getElementById("exportBtn").addEventListener("click", ()=>{
+  const blob = new Blob([JSON.stringify(custom,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "atl-tender-board-backup.json";
+  a.click();
+});
+document.getElementById("importBtn").addEventListener("click", ()=> document.getElementById("importFile").click());
+document.getElementById("importFile").addEventListener("change", (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const incoming = JSON.parse(reader.result);
+      if(Array.isArray(incoming)){
+        custom = [...incoming, ...custom];
+        saveCustom(custom);
+        refreshOrgFilter();
+        render();
+      }
+    }catch(err){ alert("Could not read that file — expected a JSON export from this app."); }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+});
+
+refreshOrgFilter();
+render();       // paint immediately with fallback data so the page isn't blank
+loadLiveData(); // then swap in live data if/when it loads
+</script>
+</body>
+</html>
